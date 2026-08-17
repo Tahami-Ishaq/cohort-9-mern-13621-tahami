@@ -38,14 +38,20 @@ export const register = async (req, res) => {
             user,
         });
     } catch (error) {
-        console.error("Registration error:", error);
+    console.error("Registration error:", error);
 
-        return res.status(500).json({
+    if (error.code === "23505") {
+        return res.status(409).json({
             success: false,
-            message: "Internal server error",
+            message: "Email is already registered",
         });
-
     }
+
+    return res.status(500).json({
+        success: false,
+        message: "Internal server error",
+    });
+}
 
 };
 
