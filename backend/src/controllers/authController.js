@@ -77,16 +77,7 @@ export const login = async (req, res) => {
                 message: "Email and password are required",
             });
         }
-        // Find user
-        const user = await findUserByEmail(email);
-
-        if (!user) {
-            return res.status(401).json({
-                success: false,
-                message: "Invalid email or password",
-            });
-        }
-
+        
 
         // bcrypt has a 72-byte UTF-8 limit, so passwords longer than that should be rejected both during registration and login.
         const passwordBytes = Buffer.byteLength(password, "utf8");
@@ -95,6 +86,16 @@ export const login = async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: "Password must not exceed 72 bytes",
+            });
+        }
+
+        // Find user
+        const user = await findUserByEmail(email);
+
+        if (!user) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password",
             });
         }
 
