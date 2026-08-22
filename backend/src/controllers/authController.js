@@ -24,6 +24,16 @@ export const register = async (req, res) => {
             });
         }
 
+        // bcrypt has a 72-byte UTF-8 limit, so passwords longer than that should be rejected both during registration and login.
+        const passwordBytes = Buffer.byteLength(password, "utf8");
+
+        if (passwordBytes > 72) {
+            return res.status(400).json({
+                success: false,
+                message: "Password must not exceed 72 bytes",
+            });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await createUser(
@@ -38,20 +48,20 @@ export const register = async (req, res) => {
             user,
         });
     } catch (error) {
-    console.error("Registration error:", error);
+        console.error("Registration error:", error);
 
-    if (error.code === "23505") {
-        return res.status(409).json({
+        if (error.code === "23505") {
+            return res.status(409).json({
+                success: false,
+                message: "Email is already registered",
+            });
+        }
+
+        return res.status(500).json({
             success: false,
-            message: "Email is already registered",
+            message: "Internal server error",
         });
     }
-
-    return res.status(500).json({
-        success: false,
-        message: "Internal server error",
-    });
-}
 
 };
 
@@ -74,6 +84,17 @@ export const login = async (req, res) => {
             return res.status(401).json({
                 success: false,
                 message: "Invalid email or password",
+            });
+        }
+
+
+        // bcrypt has a 72-byte UTF-8 limit, so passwords longer than that should be rejected both during registration and login.
+        const passwordBytes = Buffer.byteLength(password, "utf8");
+
+        if (passwordBytes > 72) {
+            return res.status(400).json({
+                success: false,
+                message: "Password must not exceed 72 bytes",
             });
         }
 
