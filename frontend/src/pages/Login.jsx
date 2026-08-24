@@ -45,11 +45,12 @@ const Login = () => {
                 password,
             });
 
-            // Save JWT token
-            if (response?.token) {
-                localStorage.setItem("token", response.token);
+            if (!response?.data?.token) {
+                throw new Error("Unable to login. Please try again.");
             }
 
+            // Save JWT token
+            localStorage.setItem("token", response.data.token);
             navigate("/notes");
         } catch (error) {
             setError(

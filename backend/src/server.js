@@ -7,10 +7,15 @@ const startServer = async () => {
   try {
     await connectDB();
 
-    app.listen(env.PORT, () => {
+    const server = app.listen(env.PORT, () => {
       logger.info(
         `Server running on http://localhost:${env.PORT}`
       );
+    });
+
+    server.on("error", (error) => {
+      logger.error(error, "Failed to start server");
+      process.exit(1);
     });
   } catch (error) {
     logger.error(error, "Failed to start server");
