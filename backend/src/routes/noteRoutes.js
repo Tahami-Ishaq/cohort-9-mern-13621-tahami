@@ -1,5 +1,4 @@
 import express from "express";
-//import { createNote } from "../controllers/noteController.js";
 import authMiddleware from "../middleware/authMiddleware.js";
 
 import {
@@ -8,7 +7,7 @@ import {
     getNoteController,
     updateNoteController,
     deleteNoteController,
-} from "../controllers/noteController.ts";
+} from "../controllers/noteController.js";
 
 const router = express.Router();
 

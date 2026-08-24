@@ -1,4 +1,3 @@
-import type { ParamsDictionary, Request, Response } from "express";
 import {
     createNote,
     getNotesByUserId,
@@ -7,61 +6,7 @@ import {
     deleteNote,
 } from "../models/noteModel.js";
 
-export interface NoteRequestPayload {
-    title: string;
-    content: string;
-}
-
-export interface Note {
-    id: string | number;
-    user_id: string | number;
-    title: string;
-    content: string;
-    created_at: string | Date;
-    updated_at: string | Date;
-}
-
-export interface ApiErrorResponse {
-    success: false;
-    message: string;
-}
-
-export interface ApiSuccessResponse<Data> {
-    success: true;
-    data: Data;
-    message?: string;
-}
-
-export type NoteResponse = ApiSuccessResponse<Note> | ApiErrorResponse;
-export type NotesResponse = ApiSuccessResponse<Note[]> | ApiErrorResponse;
-export type DeleteNoteResponse =
-    | { success: true; message: string }
-    | ApiErrorResponse;
-export type NoteControllerResponse =
-    | NoteResponse
-    | NotesResponse
-    | DeleteNoteResponse;
-
-interface AuthenticatedUser {
-    userId: string | number;
-}
-
-interface RequestLogger {
-    error(error: unknown, message: string): void;
-}
-
-export interface AuthenticatedRequest<
-    RouteParams extends ParamsDictionary = ParamsDictionary,
-    RequestBody = NoteRequestPayload,
-> extends Request<RouteParams, NoteControllerResponse, RequestBody> {
-    user: AuthenticatedUser;
-    log: RequestLogger;
-}
-
-export const createNoteController = async (
-    req: AuthenticatedRequest<ParamsDictionary, NoteRequestPayload>,
-    res: Response<NoteResponse>
-): Promise<Response<NoteResponse>> => {
+export const createNoteController = async (req, res) => {
     try {
         const { title, content } = req.body;
         const userId = req.user.userId;
@@ -90,10 +35,7 @@ export const createNoteController = async (
     }
 };
 
-export const getNotesController = async (
-    req: AuthenticatedRequest<ParamsDictionary, undefined>,
-    res: Response<NotesResponse>
-): Promise<Response<NotesResponse>> => {
+export const getNotesController = async (req, res) => {
     try {
         const notes = await getNotesByUserId(req.user.userId);
 
@@ -111,10 +53,7 @@ export const getNotesController = async (
     }
 };
 
-export const getNoteController = async (
-    req: AuthenticatedRequest<NoteRouteParams, undefined>,
-    res: Response<NoteResponse>
-): Promise<Response<NoteResponse>> => {
+export const getNoteController = async (req, res) => {
     try {
         const note = await getNoteById(req.params.id, req.user.userId);
 
@@ -139,14 +78,7 @@ export const getNoteController = async (
     }
 };
 
-export interface NoteRouteParams extends ParamsDictionary {
-    id: string;
-}
-
-export const updateNoteController = async (
-    req: AuthenticatedRequest<NoteRouteParams, NoteRequestPayload>,
-    res: Response<NoteResponse>
-): Promise<Response<NoteResponse>> => {
+export const updateNoteController = async (req, res) => {
     try {
         const { title, content } = req.body;
 
@@ -186,10 +118,7 @@ export const updateNoteController = async (
     }
 };
 
-export const deleteNoteController = async (
-    req: AuthenticatedRequest<NoteRouteParams, undefined>,
-    res: Response<DeleteNoteResponse>
-): Promise<Response<DeleteNoteResponse>> => {
+export const deleteNoteController = async (req, res) => {
     try {
         const deletedNote = await deleteNote(req.params.id, req.user.userId);
 
