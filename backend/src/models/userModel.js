@@ -44,3 +44,14 @@ export const findUserByEmail = async (email) => {
         throw new Error("Failed to find user");
     }
 };
+
+export const findUserById = async (id) => {
+    const result = await pool.query(
+        `SELECT id, name, email, created_at, updated_at
+         FROM users
+         WHERE id = $1`,
+        [id]
+    );
+
+    return result.rows[0];
+};

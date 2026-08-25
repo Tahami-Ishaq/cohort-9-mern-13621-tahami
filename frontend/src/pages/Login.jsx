@@ -31,6 +31,7 @@ const Login = () => {
 
         const { email, password } = formData;
 
+        // Frontend validation
         if (!email || !password) {
             setError("Email and password are required.");
             return;
@@ -45,12 +46,21 @@ const Login = () => {
                 password,
             });
 
-            if (!response?.data?.token) {
-                throw new Error("Unable to login. Please try again.");
+            // Check login response
+            if (!response?.success || !response?.data?.token) {
+                throw new Error(
+                    response?.message ||
+                    "Unable to login. Please try again."
+                );
             }
 
             // Save JWT token
-            localStorage.setItem("token", response.data.token);
+            localStorage.setItem(
+                "token",
+                response.data.token
+            );
+
+            // Go to notes dashboard
             navigate("/notes");
         } catch (error) {
             setError(
@@ -64,6 +74,7 @@ const Login = () => {
 
     return (
         <main className="auth-page">
+            {/* LEFT SIDE */}
             <section className="auth-visual">
                 <div className="brand">
                     <div className="brand-mark">N</div>
@@ -94,10 +105,12 @@ const Login = () => {
                 </div>
             </section>
 
+            {/* RIGHT SIDE */}
             <section className="auth-form-section">
                 <div className="auth-card">
                     <div className="auth-heading">
                         <h1>Welcome back</h1>
+
                         <p>
                             Sign in to continue to your notes.
                         </p>
@@ -126,6 +139,7 @@ const Login = () => {
                                 onChange={handleChange}
                                 placeholder="you@example.com"
                                 autoComplete="email"
+                                disabled={loading}
                             />
                         </div>
 
@@ -142,6 +156,7 @@ const Login = () => {
                                 onChange={handleChange}
                                 placeholder="Enter your password"
                                 autoComplete="current-password"
+                                disabled={loading}
                             />
                         </div>
 
@@ -157,6 +172,7 @@ const Login = () => {
 
                     <div className="auth-footer">
                         Don't have an account?{" "}
+
                         <Link to="/register">
                             Create one
                         </Link>
