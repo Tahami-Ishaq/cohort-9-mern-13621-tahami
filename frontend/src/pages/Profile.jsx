@@ -30,8 +30,6 @@ const Profile = () => {
                     error.message ||
                     "Unable to load profile."
                 );
-
-                navigate("/login");
             } finally {
                 setLoading(false);
             }

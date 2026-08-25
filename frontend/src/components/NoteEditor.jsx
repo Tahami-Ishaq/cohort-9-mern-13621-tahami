@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const NoteEditor = ({
     note,
@@ -8,6 +8,33 @@ const NoteEditor = ({
 }) => {
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
+    const [editorError, setEditorError] = useState("");
+    const dialogRef = useRef(null);
+    const titleInputRef = useRef(null);
+    const cancelRef = useRef(onCancel);
+
+    cancelRef.current = onCancel;
+
+    useEffect(() => {
+        const dialog = dialogRef.current;
+        const previouslyFocused = document.activeElement;
+
+        if (!dialog.open) {
+            dialog.showModal();
+        }
+
+        titleInputRef.current?.focus();
+
+        return () => {
+            if (dialog.open) {
+                dialog.close();
+            }
+
+            if (previouslyFocused instanceof HTMLElement) {
+                previouslyFocused.focus();
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (note) {
@@ -26,14 +53,63 @@ const NoteEditor = ({
             return;
         }
 
-        await onSave({
-            title: title.trim(),
-            content: content.trim(),
-        });
+        setEditorError("");
+
+        try {
+            await onSave({
+                title: title.trim(),
+                content: content.trim(),
+            });
+        } catch (error) {
+            setEditorError(
+                error instanceof Error && error.message
+                    ? error.message
+                    : "Unable to save note."
+            );
+        }
+    };
+
+    const handleDialogCancel = (e) => {
+        e.preventDefault();
+        cancelRef.current();
+    };
+
+    const handleDialogKeyDown = (e) => {
+        if (e.key !== "Tab") {
+            return;
+        }
+
+        const dialog = dialogRef.current;
+        const focusableElements = dialog?.querySelectorAll(
+            "button:not(:disabled), input:not(:disabled), textarea:not(:disabled)"
+        );
+
+        if (!focusableElements?.length) {
+            e.preventDefault();
+            dialog?.focus();
+            return;
+        }
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey && document.activeElement === firstElement) {
+            e.preventDefault();
+            lastElement.focus();
+        } else if (!e.shiftKey && document.activeElement === lastElement) {
+            e.preventDefault();
+            firstElement.focus();
+        }
     };
 
     return (
-        <div className="editor-overlay">
+        <dialog
+            ref={dialogRef}
+            className="editor-overlay"
+            aria-labelledby="note-editor-title"
+            onCancel={handleDialogCancel}
+            onKeyDown={handleDialogKeyDown}
+        >
             <div className="note-editor">
                 <div className="editor-header">
                     <div>
@@ -41,7 +117,7 @@ const NoteEditor = ({
                             {note ? "EDIT NOTE" : "NEW NOTE"}
                         </span>
 
-                        <h2>
+                        <h2 id="note-editor-title">
                             {note
                                 ? "Edit your note"
                                 : "Create a new note"}
@@ -64,6 +140,7 @@ const NoteEditor = ({
                         </label>
 
                         <input
+                            ref={titleInputRef}
                             id="note-title"
                             type="text"
                             value={title}
@@ -89,6 +166,12 @@ const NoteEditor = ({
                             rows="12"
                         />
                     </div>
+
+                    {editorError && (
+                        <div className="notes-error" role="alert">
+                            {editorError}
+                        </div>
+                    )}
 
                     <div className="editor-actions">
                         <button
@@ -117,7 +200,7 @@ const NoteEditor = ({
                     </div>
                 </form>
             </div>
-        </div>
+        </dialog>
     );
 };
 
