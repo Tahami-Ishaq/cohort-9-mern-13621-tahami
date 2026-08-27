@@ -1,3 +1,5 @@
+// @ts-check
+
 jest.mock("../src/services/api", () => ({
     __esModule: true,
     default: "/api/v1",
@@ -5,6 +7,15 @@ jest.mock("../src/services/api", () => ({
 
 import { getProfile, loginUser, registerUser } from "../src/services/authService";
 
+/** @typedef {{ok: boolean, json: jest.Mock<Promise<unknown>, []>}} MockResponse */
+/** @typedef {{name?: string, email?: string}} ProfileFixture */
+/** @typedef {{success: boolean, message?: string, data?: ProfileFixture | {token: string}}} AuthFixture */
+
+/**
+ * @param {AuthFixture} body
+ * @param {boolean} [ok]
+ * @returns {MockResponse}
+ */
 const response = (body, ok = true) => ({
     ok,
     json: jest.fn().mockResolvedValue(body),
