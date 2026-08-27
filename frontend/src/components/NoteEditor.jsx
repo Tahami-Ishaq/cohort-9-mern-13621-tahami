@@ -6,14 +6,16 @@ const NoteEditor = ({
     onCancel,
     saving,
 }) => {
-    const [title, setTitle] = useState("");
-    const [content, setContent] = useState("");
+    const [title, setTitle] = useState(() => note?.title || "");
+    const [content, setContent] = useState(() => note?.content || "");
     const [editorError, setEditorError] = useState("");
     const dialogRef = useRef(null);
     const titleInputRef = useRef(null);
     const cancelRef = useRef(onCancel);
 
-    cancelRef.current = onCancel;
+    useEffect(() => {
+        cancelRef.current = onCancel;
+    }, [onCancel]);
 
     useEffect(() => {
         const dialog = dialogRef.current;
@@ -35,16 +37,6 @@ const NoteEditor = ({
             }
         };
     }, []);
-
-    useEffect(() => {
-        if (note) {
-            setTitle(note.title || "");
-            setContent(note.content || "");
-        } else {
-            setTitle("");
-            setContent("");
-        }
-    }, [note]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

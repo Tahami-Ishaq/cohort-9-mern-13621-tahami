@@ -26,7 +26,7 @@ export const getNotes = async () => {
 
         return data;
     } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Failed to fetch notes");
+        throw new Error(error instanceof Error ? error.message : "Failed to fetch notes", { cause: error });
     }
 };
 
@@ -45,7 +45,7 @@ export const getNote = async (id) => {
 
         return data;
     } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Failed to fetch note");
+        throw new Error(error instanceof Error ? error.message : "Failed to fetch note", { cause: error });
     }
 };
 
@@ -65,7 +65,7 @@ export const createNote = async (noteData) => {
 
         return data;
     } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Failed to create note");
+        throw new Error(error instanceof Error ? error.message : "Failed to create note", { cause: error });
     }
 };
 
@@ -85,7 +85,7 @@ export const updateNote = async (id, noteData) => {
 
         return data;
     } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Failed to update note");
+        throw new Error(error instanceof Error ? error.message : "Failed to update note", { cause: error });
     }
 };
 
@@ -104,6 +104,6 @@ export const deleteNote = async (id) => {
 
         return data;
     } catch (error) {
-        throw new Error(error instanceof Error ? error.message : "Failed to delete note");
+        throw new Error(error instanceof Error ? error.message : "Failed to delete note", { cause: error });
     }
 };
