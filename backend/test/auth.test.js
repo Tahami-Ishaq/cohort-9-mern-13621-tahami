@@ -1,6 +1,7 @@
 import request from "supertest";
 import { expect } from "chai";
 import app from "../src/app.js";
+import { withTestContext } from "./testUtils.js";
 
 describe("Authentication API", () => {
 
@@ -8,16 +9,13 @@ describe("Authentication API", () => {
 
         it("should register a new user", async () => {
 
-            const response = await request(app)
+            const response = await withTestContext(request(app)
                 .post("/api/v1/auth/register")
                 .send({
                     name: "Test User",
                     email: `test${Date.now()}@example.com`,
                     password: "Password123"
-                });
-
-            console.log("REGISTER RESPONSE:", response.status);
-            console.log("REGISTER BODY:", response.body);
+                }), "registration request");
 
             expect(response.status).to.equal(201);
         });
@@ -31,23 +29,20 @@ describe("Authentication API", () => {
             const email = `login${Date.now()}@example.com`;
             const password = "Password123";
 
-            await request(app)
+            await withTestContext(request(app)
                 .post("/api/v1/auth/register")
                 .send({
                     name: "Login User",
                     email,
                     password
-                });
+                }), "login test registration request");
 
-            const response = await request(app)
+            const response = await withTestContext(request(app)
                 .post("/api/v1/auth/login")
                 .send({
                     email,
                     password
-                });
-
-            console.log("LOGIN RESPONSE:", response.status);
-            console.log("LOGIN BODY:", response.body);
+                }), "login request");
 
             expect(response.status).to.equal(200);
         });
@@ -60,28 +55,28 @@ describe("Authentication API", () => {
         const email = `profile${Date.now()}@example.com`;
         const password = "Password123";
 
-        await request(app)
+        await withTestContext(request(app)
             .post("/api/v1/auth/register")
             .send({
                 name: "Profile User",
                 email,
                 password,
-            });
+            }), "profile test registration request");
 
-        const loginResponse = await request(app)
+        const loginResponse = await withTestContext(request(app)
             .post("/api/v1/auth/login")
             .send({
                 email,
                 password,
-            });
+            }), "profile test login request");
 
         expect(loginResponse.status).to.equal(200);
 
         const token = loginResponse.body.data.token;
 
-        const response = await request(app)
+        const response = await withTestContext(request(app)
             .get("/api/v1/auth/me")
-            .set("Authorization", `Bearer ${token}`);
+            .set("Authorization", `Bearer ${token}`), "profile request");
 
         expect(response.status).to.equal(200);
         expect(response.body.success).to.equal(true);
@@ -90,8 +85,10 @@ describe("Authentication API", () => {
     });
 
     it("should return 401 without authentication token", async () => {
-        const response = await request(app)
-            .get("/api/v1/auth/me");
+        const response = await withTestContext(
+            request(app).get("/api/v1/auth/me"),
+            "unauthenticated profile request"
+        );
 
         expect(response.status).to.equal(401);
         expect(response.body.success).to.equal(false);

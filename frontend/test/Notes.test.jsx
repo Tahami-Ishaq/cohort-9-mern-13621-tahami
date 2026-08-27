@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import Notes from "../src/pages/Notes";
 import { createNote, deleteNote, getNotes, updateNote } from "../src/services/noteService";
+import { withTestContext } from "./testUtils";
 
 const mockNavigate = jest.fn();
 
@@ -49,7 +50,10 @@ describe("Notes", () => {
         renderNotes();
 
         expect(screen.getByText("Loading your notes...")).toBeInTheDocument();
-        expect(await screen.findByText("First note")).toBeInTheDocument();
+        expect(await withTestContext(
+            screen.findByText("First note"),
+            "wait for fetched notes"
+        )).toBeInTheDocument();
         expect(screen.getByText("2 notes")).toBeInTheDocument();
     });
 
@@ -58,8 +62,14 @@ describe("Notes", () => {
         getNotes.mockResolvedValue({ data: [] });
         renderNotes();
 
-        await screen.findByText("Your notebook is empty");
-        await user.click(screen.getByRole("button", { name: "Create your first note" }));
+        await withTestContext(
+            screen.findByText("Your notebook is empty"),
+            "wait for empty notes state"
+        );
+        await withTestContext(
+            user.click(screen.getByRole("button", { name: "Create your first note" })),
+            "open create note editor"
+        );
 
         expect(screen.getByRole("dialog")).toHaveTextContent("Creating");
     });
@@ -70,12 +80,27 @@ describe("Notes", () => {
         createNote.mockResolvedValue({ success: true });
         renderNotes();
 
-        await screen.findByText("Your notebook is empty");
-        await user.click(screen.getByRole("button", { name: "Create your first note" }));
-        await user.click(screen.getByRole("button", { name: "Save editor" }));
+        await withTestContext(
+            screen.findByText("Your notebook is empty"),
+            "wait for create note empty state"
+        );
+        await withTestContext(
+            user.click(screen.getByRole("button", { name: "Create your first note" })),
+            "open create note editor"
+        );
+        await withTestContext(
+            user.click(screen.getByRole("button", { name: "Save editor" })),
+            "save created note"
+        );
 
-        await waitFor(() => expect(createNote).toHaveBeenCalledWith({ title: "Saved title", content: "Saved content" }));
-        expect(await screen.findByText("Saved title")).toBeInTheDocument();
+        await withTestContext(
+            waitFor(() => expect(createNote).toHaveBeenCalledWith({ title: "Saved title", content: "Saved content" })),
+            "wait for create note request"
+        );
+        expect(await withTestContext(
+            screen.findByText("Saved title"),
+            "wait for refreshed note"
+        )).toBeInTheDocument();
         expect(getNotes).toHaveBeenCalledTimes(2);
     });
 
@@ -86,11 +111,23 @@ describe("Notes", () => {
         updateNote.mockResolvedValue({ success: true });
         renderNotes();
 
-        await user.click(await screen.findByRole("button", { name: "Edit note" }));
+        await withTestContext(
+            user.click(await withTestContext(
+                screen.findByRole("button", { name: "Edit note" }),
+                "wait for edit note button"
+            )),
+            "open edit note editor"
+        );
         expect(screen.getByRole("dialog")).toHaveTextContent("Editing");
-        await user.click(screen.getByRole("button", { name: "Save editor" }));
+        await withTestContext(
+            user.click(screen.getByRole("button", { name: "Save editor" })),
+            "save updated note"
+        );
 
-        await waitFor(() => expect(updateNote).toHaveBeenCalledWith(4, { title: "Saved title", content: "Saved content" }));
+        await withTestContext(
+            waitFor(() => expect(updateNote).toHaveBeenCalledWith(4, { title: "Saved title", content: "Saved content" })),
+            "wait for update note request"
+        );
     });
 
     it("deletes a confirmed note and supports logout", async () => {
@@ -102,11 +139,23 @@ describe("Notes", () => {
         localStorage.setItem("token", "token");
         renderNotes();
 
-        await user.click(await screen.findByRole("button", { name: "Delete note" }));
-        await waitFor(() => expect(deleteNote).toHaveBeenCalledWith(4));
+        await withTestContext(
+            user.click(await withTestContext(
+                screen.findByRole("button", { name: "Delete note" }),
+                "wait for delete note button"
+            )),
+            "delete note interaction"
+        );
+        await withTestContext(
+            waitFor(() => expect(deleteNote).toHaveBeenCalledWith(4)),
+            "wait for delete note request"
+        );
         expect(screen.queryByText("To delete")).not.toBeInTheDocument();
 
-        await user.click(screen.getByRole("button", { name: "Logout" }));
+        await withTestContext(
+            user.click(screen.getByRole("button", { name: "Logout" })),
+            "logout interaction"
+        );
         expect(localStorage.getItem("token")).toBeNull();
         expect(mockNavigate).toHaveBeenCalledWith("/login");
     });
@@ -115,13 +164,25 @@ describe("Notes", () => {
         const user = userEvent.setup();
         getNotes.mockRejectedValueOnce(new Error("Unable to load notes"));
         renderNotes();
-        expect(await screen.findByText("Unable to load notes")).toBeInTheDocument();
+        expect(await withTestContext(
+            screen.findByText("Unable to load notes"),
+            "wait for notes fetch error"
+        )).toBeInTheDocument();
 
         getNotes.mockResolvedValueOnce({ data: [{ id: 1, title: "Note" }] });
         window.confirm.mockReturnValue(true);
         deleteNote.mockRejectedValue(new Error("Unable to delete note"));
         renderNotes();
-        await user.click(await screen.findByRole("button", { name: "Delete note" }));
-        expect(await screen.findByText("Unable to delete note")).toBeInTheDocument();
+        await withTestContext(
+            user.click(await withTestContext(
+                screen.findByRole("button", { name: "Delete note" }),
+                "wait for delete error note button"
+            )),
+            "delete note with failing request"
+        );
+        expect(await withTestContext(
+            screen.findByText("Unable to delete note"),
+            "wait for delete note error"
+        )).toBeInTheDocument();
     });
 });

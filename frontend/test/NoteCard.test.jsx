@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import NoteCard from "../src/components/NoteCard";
+import { withTestContext } from "./testUtils";
 
 describe("NoteCard", () => {
     const note = {
@@ -24,8 +25,14 @@ describe("NoteCard", () => {
 
         render(<NoteCard note={note} onEdit={onEdit} onDelete={onDelete} />);
 
-        await user.click(screen.getByRole("button", { name: "Edit" }));
-        await user.click(screen.getByRole("button", { name: "Delete" }));
+        await withTestContext(
+            user.click(screen.getByRole("button", { name: "Edit" })),
+            "edit note interaction"
+        );
+        await withTestContext(
+            user.click(screen.getByRole("button", { name: "Delete" })),
+            "delete note interaction"
+        );
 
         expect(onEdit).toHaveBeenCalledWith(note);
         expect(onDelete).toHaveBeenCalledWith(note.id);

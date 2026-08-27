@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import NoteEditor from "../src/components/NoteEditor";
+import { withTestContext } from "./testUtils";
 
 beforeAll(() => {
     HTMLDialogElement.prototype.showModal = function () {
@@ -34,7 +35,10 @@ describe("NoteEditor", () => {
         expect(screen.getByRole("heading", { name: "Edit your note" })).toBeInTheDocument();
         fireEvent.change(screen.getByLabelText("Title"), { target: { value: "  New title  " } });
         fireEvent.change(screen.getByLabelText("Your thoughts"), { target: { value: "  New content  " } });
-        await user.click(screen.getByRole("button", { name: "Save changes" }));
+        await withTestContext(
+            user.click(screen.getByRole("button", { name: "Save changes" })),
+            "save edited note interaction"
+        );
 
         expect(onSave).toHaveBeenCalledWith({ title: "New title", content: "New content" });
     });
@@ -45,12 +49,27 @@ describe("NoteEditor", () => {
         const onSave = jest.fn().mockRejectedValue(new Error("Save failed"));
         render(<NoteEditor note={null} onSave={onSave} onCancel={onCancel} saving={false} />);
 
-        await user.type(screen.getByLabelText("Title"), "Title");
-        await user.type(screen.getByLabelText("Your thoughts"), "Content");
-        await user.click(screen.getByRole("button", { name: "Save note" }));
-        expect(await screen.findByRole("alert")).toHaveTextContent("Save failed");
+        await withTestContext(
+            user.type(screen.getByLabelText("Title"), "Title"),
+            "enter note title"
+        );
+        await withTestContext(
+            user.type(screen.getByLabelText("Your thoughts"), "Content"),
+            "enter note content"
+        );
+        await withTestContext(
+            user.click(screen.getByRole("button", { name: "Save note" })),
+            "save new note interaction"
+        );
+        expect(await withTestContext(
+            screen.findByRole("alert"),
+            "wait for note save error"
+        )).toHaveTextContent("Save failed");
 
-        await user.click(screen.getByRole("button", { name: "Cancel" }));
+        await withTestContext(
+            user.click(screen.getByRole("button", { name: "Cancel" })),
+            "cancel note editor interaction"
+        );
         expect(onCancel).toHaveBeenCalled();
     });
 

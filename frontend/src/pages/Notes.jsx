@@ -79,6 +79,7 @@ const Notes = () => {
             setError(
                 error.message || "Unable to save note."
             );
+            throw error;
         } finally {
             setSaving(false);
         }

@@ -47,7 +47,10 @@ describe("authService", () => {
         const data = { success: true, data: { name: "Sam" } };
         fetch.mockResolvedValue(response(data));
 
-        await expect(getProfile()).resolves.toEqual(data);
+        await expect(getProfile()).resolves.toEqual({
+            ...data,
+            data: { name: "Sam", email: "" },
+        });
         expect(fetch).toHaveBeenCalledWith("/api/v1/auth/me", {
             method: "GET",
             headers: {

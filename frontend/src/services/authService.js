@@ -48,19 +48,30 @@ export const loginUser = async (userData) => {
 export const getProfile = async () => {
     const token = localStorage.getItem("token");
 
-    const response = await fetch(`${API_URL}/me`, {
+    const { response, data } = await fetchAuthResponse(`${API_URL}/me`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
         },
-    });
-
-    const data = await response.json();
+    }, "Failed to fetch profile");
 
     if (!response.ok) {
         throw new Error(data.message || "Failed to fetch profile");
     }
 
-    return data;
+    const profile = data?.data;
+
+    if (!profile || typeof profile !== "object") {
+        throw new Error("Invalid profile response");
+    }
+
+    return {
+        ...data,
+        data: {
+            ...profile,
+            name: typeof profile.name === "string" ? profile.name : "",
+            email: typeof profile.email === "string" ? profile.email : "",
+        },
+    };
 };

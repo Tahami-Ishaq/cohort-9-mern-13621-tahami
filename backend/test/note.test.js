@@ -1,6 +1,7 @@
 import request from "supertest";
 import { expect } from "chai";
 import app from "../src/app.js";
+import { withTestContext } from "./testUtils.js";
 
 describe("Notes API", () => {
     let token;
@@ -11,22 +12,22 @@ describe("Notes API", () => {
 
     // Create test user and get authentication token
     before(async () => {
-        const registerResponse = await request(app)
+        const registerResponse = await withTestContext(request(app)
             .post("/api/v1/auth/register")
             .send({
                 name: "Notes Test User",
                 email,
                 password,
-            });
+            }), "notes test registration request");
 
         expect(registerResponse.status).to.equal(201);
 
-        const loginResponse = await request(app)
+        const loginResponse = await withTestContext(request(app)
             .post("/api/v1/auth/login")
             .send({
                 email,
                 password,
-            });
+            }), "notes test login request");
 
         expect(loginResponse.status).to.equal(200);
 

@@ -133,6 +133,7 @@ const Profile = () => {
                                           year: "numeric",
                                           month: "long",
                                           day: "numeric",
+                                          timeZone: "UTC",
                                       }
                                   )
                                 : "—"}
