@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../services/authService";
 
 
+const emailPattern = /^[^\s@]+@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}$/;
+
 const Register = () => {
     const navigate = useNavigate();
 
@@ -35,6 +37,16 @@ const handleSubmit = async (e) => {
 
     if (!name || !email || !password) {
         setError("Name, email and password are required.");
+        return;
+    }
+
+    if (!emailPattern.test(email.trim())) {
+        setError("Please enter a valid email address.");
+        return;
+    }
+
+    if (password.trim().length < 8) {
+        setError("Password must be at least 8 characters long.");
         return;
     }
 

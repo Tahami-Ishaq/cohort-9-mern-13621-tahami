@@ -37,7 +37,8 @@ export const createNoteController = async (req, res) => {
 
 export const getNotesController = async (req, res) => {
     try {
-        const notes = await getNotesByUserId(req.user.userId);
+        const search = typeof req.query.search === "string" ? req.query.search : "";
+        const notes = await getNotesByUserId(req.user.userId, search);
 
         return res.status(200).json({
             success: true,

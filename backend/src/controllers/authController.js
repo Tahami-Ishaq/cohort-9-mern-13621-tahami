@@ -4,6 +4,26 @@ import { createUser, findUserByEmail } from "../models/userModel.js";
 import env from "../config/env.js"; // env file se jwt secret key ko import kar rahe hain
 import { findUserById } from "../models/userModel.js";
 
+const EMAIL_REGEX = /^[^\s@]+@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}$/;
+
+const validateCredentials = (email, password) => {
+    const trimmedEmail = typeof email === "string" ? email.trim() : "";
+    const trimmedPassword = typeof password === "string" ? password.trim() : "";
+
+    if (!trimmedEmail || !trimmedPassword) {
+        return "Email and password are required";
+    }
+
+    if (!EMAIL_REGEX.test(trimmedEmail)) {
+        return "Please enter a valid email address";
+    }
+
+    if (trimmedPassword.length < 8) {
+        return "Password must be at least 8 characters long";
+    }
+
+    return null;
+};
 
 // register function to handle user registration
 export const register = async (req, res) => {
@@ -24,7 +44,17 @@ export const register = async (req, res) => {
             });
         }
 
-        const existingUser = await findUserByEmail(email);
+        const validationError = validateCredentials(email, password);
+
+        if (validationError) {
+            return res.status(400).json({
+                success: false,
+                message: validationError,
+            });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+        const existingUser = await findUserByEmail(normalizedEmail);
 
         if (existingUser) {
             return res.status(409).json({
@@ -47,7 +77,7 @@ export const register = async (req, res) => {
 
         const user = await createUser(
             name,
-            email,
+            normalizedEmail,
             hashedPassword
         );
 
@@ -82,19 +112,27 @@ export const login = async (req, res) => {
         // Validate input
         if (
             typeof email !== "string" ||
-            typeof password !== "string" ||
-            !email.trim() ||
-            !password.trim()
+            typeof password !== "string"
         ) {
             return res.status(400).json({
                 success: false,
                 message: "Email and password are required",
             });
         }
-        
+
+        const validationError = validateCredentials(email, password);
+
+        if (validationError) {
+            return res.status(400).json({
+                success: false,
+                message: validationError,
+            });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
 
         // bcrypt has a 72-byte UTF-8 limit, so passwords longer than that should be rejected both during registration and login.
-        const passwordBytes = Buffer.byteLength(password, "utf8");
+        const passwordBytes = Buffer.byteLength(password.trim(), "utf8");
 
         if (passwordBytes > 72) {
             return res.status(400).json({
@@ -104,7 +142,7 @@ export const login = async (req, res) => {
         }
 
         // Find user
-        const user = await findUserByEmail(email);
+        const user = await findUserByEmail(normalizedEmail);
 
         if (!user) {
             return res.status(401).json({
@@ -115,7 +153,7 @@ export const login = async (req, res) => {
 
         // Compare entered password with hashed password
         const isPasswordValid = await bcrypt.compare(
-            password,
+            password.trim(),
             user.password
         );
 

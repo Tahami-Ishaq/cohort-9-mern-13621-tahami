@@ -11,9 +11,10 @@ const getAuthHeaders = () => {
     };
 };
 
-export const getNotes = async () => {
+export const getNotes = async (search = "") => {
     try {
-        const response = await fetch(API_URL, {
+        const query = search?.trim() ? `?search=${encodeURIComponent(search.trim())}` : "";
+        const response = await fetch(`${API_URL}${query}`, {
             method: "GET",
             headers: getAuthHeaders(),
         });

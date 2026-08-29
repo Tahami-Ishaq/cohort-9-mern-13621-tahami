@@ -83,6 +83,29 @@ describe("Notes API", () => {
 
             expect(response.body.data.length).to.be.greaterThan(0);
         });
+
+        it("should filter notes by title search query", async () => {
+            const matchingTitle = "Updated Search Note";
+
+            const createResponse = await request(app)
+                .post("/api/v1/notes")
+                .set("Authorization", `Bearer ${token}`)
+                .send({
+                    title: matchingTitle,
+                    content: "This note should match the search term.",
+                });
+
+            expect(createResponse.status).to.equal(201);
+
+            const response = await request(app)
+                .get("/api/v1/notes?search=updated")
+                .set("Authorization", `Bearer ${token}`);
+
+            expect(response.status).to.equal(200);
+            expect(response.body.success).to.equal(true);
+            expect(response.body.data).to.be.an("array");
+            expect(response.body.data.some((note) => note.title.toLowerCase().includes("updated"))).to.equal(true);
+        });
     });
 
     // =========================

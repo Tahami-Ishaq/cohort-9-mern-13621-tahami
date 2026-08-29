@@ -1,14 +1,23 @@
+const stripHtml = (value = "") => value.replace(/<[^>]*>/g, "").trim();
+
 const NoteCard = ({ note, onEdit, onDelete }) => {
+    const previewContent = note.content || "";
+    const plainTitle = stripHtml(note.title || "Untitled");
+
     return (
         <article className="note-card">
             <div className="note-card-content">
-                <h3>{note.title}</h3>
+                <h3>{plainTitle}</h3>
 
-                <p>
-                    {note.content?.length > 150
-                        ? `${note.content.substring(0, 150)}...`
-                        : note.content}
-                </p>
+                <div
+                    className="note-card-body"
+                    dangerouslySetInnerHTML={{
+                        __html:
+                            stripHtml(previewContent).length > 150
+                                ? `${stripHtml(previewContent).substring(0, 150)}...`
+                                : previewContent,
+                    }}
+                />
             </div>
 
             <div className="note-card-footer">

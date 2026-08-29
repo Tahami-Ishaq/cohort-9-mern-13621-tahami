@@ -38,13 +38,13 @@ describe("Register", () => {
 
         await user.type(screen.getByLabelText("Full name"), "Sam User");
         await user.type(screen.getByLabelText("Email address"), "sam@example.com");
-        await user.type(screen.getByLabelText("Password"), "secret");
+        await user.type(screen.getByLabelText("Password"), "secret123");
         await user.click(screen.getByRole("button", { name: "Create account" }));
 
         expect(registerUser).toHaveBeenCalledWith({
             name: "Sam User",
             email: "sam@example.com",
-            password: "secret",
+            password: "secret123",
         });
         expect(mockNavigate).toHaveBeenCalledWith("/login");
     });
@@ -56,7 +56,7 @@ describe("Register", () => {
 
         await user.type(screen.getByLabelText("Full name"), "Sam User");
         await user.type(screen.getByLabelText("Email address"), "sam@example.com");
-        await user.type(screen.getByLabelText("Password"), "secret");
+        await user.type(screen.getByLabelText("Password"), "secret123");
         await user.click(screen.getByRole("button", { name: "Create account" }));
 
         expect(await screen.findByText("Email is already registered")).toBeInTheDocument();

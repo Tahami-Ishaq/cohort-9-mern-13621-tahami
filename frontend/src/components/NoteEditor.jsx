@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
+const toolbarButtons = [
+    { label: "Bold", action: "bold", icon: "B" },
+    { label: "Italic", action: "italic", icon: "I" },
+    { label: "Heading", action: "formatBlock", icon: "H1" },
+    { label: "Bullet list", action: "insertUnorderedList", icon: "• List" },
+    { label: "Number list", action: "insertOrderedList", icon: "1. List" },
+];
+
 const NoteEditor = ({
     note,
     onSave,
@@ -10,7 +18,10 @@ const NoteEditor = ({
     const [content, setContent] = useState(() => note?.content || "");
     const [editorError, setEditorError] = useState("");
     const dialogRef = useRef(null);
+    const titleEditorRef = useRef(null);
+    const contentEditorRef = useRef(null);
     const titleInputRef = useRef(null);
+    const contentInputRef = useRef(null);
     const cancelRef = useRef(onCancel);
 
     useEffect(() => {
@@ -25,7 +36,29 @@ const NoteEditor = ({
             dialog.showModal();
         }
 
-        titleInputRef.current?.focus();
+        if (titleEditorRef.current && titleEditorRef.current.innerHTML !== title) {
+            titleEditorRef.current.innerHTML = title || "";
+        }
+
+        if (titleInputRef.current && titleInputRef.current.value !== title) {
+            titleInputRef.current.value = title || "";
+        }
+
+        if (titleEditorRef.current) {
+            titleEditorRef.current.focus();
+        }
+
+        if (contentEditorRef.current && contentEditorRef.current.innerHTML !== content) {
+            contentEditorRef.current.innerHTML = content || "";
+        }
+
+        if (contentInputRef.current && contentInputRef.current.value !== content) {
+            contentInputRef.current.value = content || "";
+        }
+
+        if (contentEditorRef.current && contentEditorRef.current.innerHTML !== content) {
+            contentEditorRef.current.innerHTML = content || "";
+        }
 
         return () => {
             if (dialog.open) {
@@ -36,12 +69,54 @@ const NoteEditor = ({
                 previouslyFocused.focus();
             }
         };
-    }, []);
+    }, [note?.id]);
+
+    const syncTitle = () => {
+        const nextValue = titleEditorRef.current?.innerHTML || "";
+        setTitle(nextValue);
+
+        if (titleInputRef.current) {
+            titleInputRef.current.value = nextValue;
+        }
+
+        return nextValue;
+    };
+
+    const syncContent = () => {
+        const nextValue = contentEditorRef.current?.innerHTML || "";
+        setContent(nextValue);
+
+        if (contentInputRef.current) {
+            contentInputRef.current.value = nextValue;
+        }
+
+        return nextValue;
+    };
+
+    const applyFormatting = (targetRef, command, value = null) => {
+        if (!targetRef.current) {
+            return;
+        }
+
+        targetRef.current.focus();
+        document.execCommand(command, false, value);
+
+        if (targetRef === titleEditorRef) {
+            syncTitle();
+        } else {
+            syncContent();
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!title.trim() || !content.trim()) {
+        const normalizedTitle = syncTitle();
+        const normalizedContent = syncContent();
+        const titleValue = normalizedTitle.replace(/<[^>]*>/g, "").trim();
+        const contentValue = normalizedContent.replace(/<[^>]*>/g, "").trim();
+
+        if (!titleValue || !contentValue) {
             return;
         }
 
@@ -49,8 +124,8 @@ const NoteEditor = ({
 
         try {
             await onSave({
-                title: title.trim(),
-                content: content.trim(),
+                title: titleValue,
+                content: contentValue,
             });
         } catch (error) {
             setEditorError(
@@ -126,36 +201,112 @@ const NoteEditor = ({
                 </div>
 
                 <form onSubmit={handleSubmit}>
+                    <input
+                        ref={titleInputRef}
+                        id="note-title"
+                        type="text"
+                        value={title}
+                        aria-label="Title"
+                        onChange={(event) => {
+                            const nextValue = event.target.value;
+                            setTitle(nextValue);
+                            if (titleEditorRef.current) {
+                                titleEditorRef.current.innerHTML = nextValue;
+                            }
+                        }}
+                        style={{
+                            position: "absolute",
+                            width: "1px",
+                            height: "1px",
+                            opacity: 0,
+                        }}
+                    />
+
                     <div className="editor-field">
                         <label htmlFor="note-title">
                             Title
                         </label>
 
-                        <input
-                            ref={titleInputRef}
-                            id="note-title"
-                            type="text"
-                            value={title}
-                            onChange={(e) =>
-                                setTitle(e.target.value)
-                            }
-                            placeholder="Give your note a title..."
+                        <div className="rich-editor-toolbar rich-title-toolbar">
+                            {toolbarButtons.map((button) => (
+                                <button
+                                    key={`title-${button.action}`}
+                                    type="button"
+                                    className="toolbar-btn"
+                                    onMouseDown={(event) => event.preventDefault()}
+                                    onClick={() =>
+                                        button.action === "formatBlock"
+                                            ? applyFormatting(titleEditorRef, button.action, "h2")
+                                            : applyFormatting(titleEditorRef, button.action)
+                                    }
+                                    title={button.label}
+                                >
+                                    {button.icon}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div
+                            ref={titleEditorRef}
+                            className="rich-editor title-editor"
+                            contentEditable
+                            suppressContentEditableWarning
+                            onInput={syncTitle}
+                            data-placeholder="Give your note a title..."
                         />
                     </div>
+
+                    <textarea
+                        ref={contentInputRef}
+                        id="note-content"
+                        value={content}
+                        aria-label="Your thoughts"
+                        onChange={(event) => {
+                            const nextValue = event.target.value;
+                            setContent(nextValue);
+                            if (contentEditorRef.current) {
+                                contentEditorRef.current.innerHTML = nextValue;
+                            }
+                        }}
+                        style={{
+                            position: "absolute",
+                            width: "1px",
+                            height: "1px",
+                            opacity: 0,
+                        }}
+                    />
 
                     <div className="editor-field">
                         <label htmlFor="note-content">
                             Your thoughts
                         </label>
 
-                        <textarea
-                            id="note-content"
-                            value={content}
-                            onChange={(e) =>
-                                setContent(e.target.value)
-                            }
-                            placeholder="Start writing your thoughts..."
-                            rows="12"
+                        <div className="rich-editor-toolbar">
+                            {toolbarButtons.map((button) => (
+                                <button
+                                    key={`content-${button.action}`}
+                                    type="button"
+                                    className="toolbar-btn"
+                                    onMouseDown={(event) => event.preventDefault()}
+                                    onClick={() =>
+                                        button.action === "formatBlock"
+                                            ? applyFormatting(contentEditorRef, button.action, "h2")
+                                            : applyFormatting(contentEditorRef, button.action)
+                                    }
+                                    title={button.label}
+                                >
+                                    {button.icon}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div
+                            ref={contentEditorRef}
+                            className="rich-editor"
+                            contentEditable
+                            suppressContentEditableWarning
+                            onInput={syncContent}
+                            data-placeholder="Start writing your thoughts..."
                         />
                     </div>
 
@@ -179,8 +330,8 @@ const NoteEditor = ({
                             className="save-btn"
                             disabled={
                                 saving ||
-                                !title.trim() ||
-                                !content.trim()
+                                !title.replace(/<[^>]*>/g, "").trim() ||
+                                !content.replace(/<[^>]*>/g, "").trim()
                             }
                         >
                             {saving

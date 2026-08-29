@@ -23,13 +23,14 @@ const Notes = () => {
 
     const [showEditor, setShowEditor] = useState(false);
     const [selectedNote, setSelectedNote] = useState(null);
+    const [search, setSearch] = useState("");
 
-    const fetchNotes = async () => {
+    const fetchNotes = async (currentSearch = search) => {
         try {
             setLoading(true);
             setError("");
 
-            const response = await getNotes();
+            const response = await getNotes(currentSearch);
 
             setNotes(response.data || []);
         } catch (error) {
@@ -83,6 +84,12 @@ const Notes = () => {
         } finally {
             setSaving(false);
         }
+    };
+
+    const handleSearch = async (nextSearch) => {
+        const normalizedSearch = nextSearch.trim();
+        setSearch(normalizedSearch);
+        await fetchNotes(normalizedSearch);
     };
 
     const handleDelete = async (id) => {
@@ -157,12 +164,22 @@ const Notes = () => {
                         <h2>All your thoughts</h2>
                     </div>
 
-                    <span className="note-count">
-                        {notes.length}{" "}
-                        {notes.length === 1
-                            ? "note"
-                            : "notes"}
-                    </span>
+                    <div className="notes-toolbar">
+                        <input
+                            type="search"
+                            value={search}
+                            onChange={(event) => handleSearch(event.target.value)}
+                            placeholder="Search by title"
+                            className="notes-search"
+                            aria-label="Search notes by title"
+                        />
+                        <span className="note-count">
+                            {notes.length}{" "}
+                            {notes.length === 1
+                                ? "note"
+                                : "notes"}
+                        </span>
+                    </div>
                 </div>
 
                 {error && (

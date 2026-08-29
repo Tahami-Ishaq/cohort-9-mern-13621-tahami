@@ -40,10 +40,10 @@ describe("Login", () => {
         renderLogin();
 
         await user.type(screen.getByLabelText("Email address"), "sam@example.com");
-        await user.type(screen.getByLabelText("Password"), "secret");
+        await user.type(screen.getByLabelText("Password"), "secret123");
         await user.click(screen.getByRole("button", { name: "Sign in" }));
 
-        expect(loginUser).toHaveBeenCalledWith({ email: "sam@example.com", password: "secret" });
+        expect(loginUser).toHaveBeenCalledWith({ email: "sam@example.com", password: "secret123" });
         expect(localStorage.getItem("token")).toBe("jwt-token");
         expect(mockNavigate).toHaveBeenCalledWith("/notes");
     });
@@ -54,7 +54,7 @@ describe("Login", () => {
         renderLogin();
 
         await user.type(screen.getByLabelText("Email address"), "sam@example.com");
-        await user.type(screen.getByLabelText("Password"), "wrong");
+        await user.type(screen.getByLabelText("Password"), "wrongpass");
         await user.click(screen.getByRole("button", { name: "Sign in" }));
         expect(await screen.findByText("Invalid email or password")).toBeInTheDocument();
 

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../services/authService";
 
+const emailPattern = /^[^\s@]+@(?:[A-Za-z0-9-]+\.)+[A-Za-z]{2,}$/;
+
 const Login = () => {
     const navigate = useNavigate();
 
@@ -34,6 +36,16 @@ const Login = () => {
         // Frontend validation
         if (!email || !password) {
             setError("Email and password are required.");
+            return;
+        }
+
+        if (!emailPattern.test(email.trim())) {
+            setError("Please enter a valid email address.");
+            return;
+        }
+
+        if (password.trim().length < 8) {
+            setError("Password must be at least 8 characters long.");
             return;
         }
 

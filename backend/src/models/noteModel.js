@@ -17,15 +17,25 @@ export const createNote = async (userId, title, content) => {
 };
 
 // Get all notes belonging to a user
-export const getNotesByUserId = async (userId) => {
+export const getNotesByUserId = async (userId, search = "") => {
     try {
-        const result = await pool.query(
-            `SELECT id, user_id, title, content, created_at, updated_at
-             FROM notes
-             WHERE user_id = $1
-             ORDER BY created_at DESC`,
-            [userId]
-        );
+        const trimmedSearch = search?.trim() ?? "";
+        const params = [userId];
+
+        let query = `
+            SELECT id, user_id, title, content, created_at, updated_at
+            FROM notes
+            WHERE user_id = $1
+        `;
+
+        if (trimmedSearch) {
+            query += ` AND title ILIKE $2 `;
+            params.push(`%${trimmedSearch}%`);
+        }
+
+        query += ` ORDER BY created_at DESC`;
+
+        const result = await pool.query(query, params);
 
         return result.rows;
     } catch (error) {

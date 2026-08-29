@@ -36,6 +36,42 @@ describe("Authentication API", () => {
             expect(response.status).to.equal(201);
         });
 
+        it("should reject invalid email format", async () => {
+            /** @type {RegistrationPayload} */
+            const payload = {
+                name: "Invalid Email User",
+                email: "invalid-email",
+                password: "Password123"
+            };
+
+            /** @type {AuthResponse} */
+            const response = await withTestContext(request(app)
+                .post("/api/v1/auth/register")
+                .send(payload), "invalid email registration request");
+
+            expect(response.status).to.equal(400);
+            expect(response.body.success).to.equal(false);
+            expect(response.body.message).to.equal("Please enter a valid email address");
+        });
+
+        it("should reject passwords shorter than 8 characters", async () => {
+            /** @type {RegistrationPayload} */
+            const payload = {
+                name: "Short Password User",
+                email: `shortpass${Date.now()}@example.com`,
+                password: "12345"
+            };
+
+            /** @type {AuthResponse} */
+            const response = await withTestContext(request(app)
+                .post("/api/v1/auth/register")
+                .send(payload), "short password registration request");
+
+            expect(response.status).to.equal(400);
+            expect(response.body.success).to.equal(false);
+            expect(response.body.message).to.equal("Password must be at least 8 characters long");
+        });
+
     });
 
     describe("POST /api/v1/auth/login", () => {
@@ -59,6 +95,23 @@ describe("Authentication API", () => {
                 .send(credentials), "login request");
 
             expect(response.status).to.equal(200);
+        });
+
+        it("should reject login with invalid email format", async () => {
+            /** @type {LoginPayload} */
+            const credentials = {
+                email: "invalid-login-email",
+                password: "Password123"
+            };
+
+            /** @type {AuthResponse} */
+            const response = await withTestContext(request(app)
+                .post("/api/v1/auth/login")
+                .send(credentials), "invalid email login request");
+
+            expect(response.status).to.equal(400);
+            expect(response.body.success).to.equal(false);
+            expect(response.body.message).to.equal("Please enter a valid email address");
         });
 
     });
