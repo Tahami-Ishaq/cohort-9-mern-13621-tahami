@@ -1,8 +1,10 @@
 // @ts-check
 
+import bcrypt from "bcrypt";
 import request from "supertest";
 import { expect } from "chai";
 import app from "../src/app.js";
+import { createUser } from "../src/models/userModel.js";
 import { withTestContext } from "./testUtils.js";
 
 const mochaGlobals = /** @type {any} */ (globalThis);
@@ -97,6 +99,29 @@ describe("Authentication API", () => {
             expect(response.status).to.equal(200);
         });
 
+        it("should allow login for a user whose stored password is shorter than 8 characters", async () => {
+            const email = `shortlogin${Date.now()}@example.com`;
+            const password = "short";
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            await createUser("Short Login User", email, hashedPassword);
+
+            /** @type {LoginPayload} */
+            const credentials = {
+                email,
+                password,
+            };
+
+            /** @type {AuthResponse} */
+            const response = await withTestContext(request(app)
+                .post("/api/v1/auth/login")
+                .send(credentials), "short password login request");
+
+            expect(response.status).to.equal(200);
+            expect(response.body.success).to.equal(true);
+            expect(response.body.data?.user?.email).to.equal(email);
+        });
+
         it("should reject login with invalid email format", async () => {
             /** @type {LoginPayload} */
             const credentials = {
@@ -112,6 +137,31 @@ describe("Authentication API", () => {
             expect(response.status).to.equal(400);
             expect(response.body.success).to.equal(false);
             expect(response.body.message).to.equal("Please enter a valid email address");
+        });
+
+        it("should normalize password whitespace during registration and login", async () => {
+            const email = `trimmed${Date.now()}@example.com`;
+            const password = "Password123";
+
+            const registerResponse = await withTestContext(request(app)
+                .post("/api/v1/auth/register")
+                .send({
+                    name: "Trimmed Password User",
+                    email,
+                    password: `  ${password}  `,
+                }), "whitespace registration request");
+
+            expect(registerResponse.status).to.equal(201);
+
+            const loginResponse = await withTestContext(request(app)
+                .post("/api/v1/auth/login")
+                .send({
+                    email,
+                    password,
+                }), "whitespace login request");
+
+            expect(loginResponse.status).to.equal(200);
+            expect(loginResponse.body.success).to.equal(true);
         });
 
     });

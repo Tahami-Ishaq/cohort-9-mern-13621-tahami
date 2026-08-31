@@ -18,10 +18,6 @@ const validateCredentials = (email, password) => {
         return "Please enter a valid email address";
     }
 
-    if (trimmedPassword.length < 8) {
-        return "Password must be at least 8 characters long";
-    }
-
     return null;
 };
 
@@ -44,12 +40,20 @@ export const register = async (req, res) => {
             });
         }
 
-        const validationError = validateCredentials(email, password);
+        const normalizedPassword = password.trim();
+        const validationError = validateCredentials(email, normalizedPassword);
 
         if (validationError) {
             return res.status(400).json({
                 success: false,
                 message: validationError,
+            });
+        }
+
+        if (normalizedPassword.length < 8) {
+            return res.status(400).json({
+                success: false,
+                message: "Password must be at least 8 characters long",
             });
         }
 
@@ -64,7 +68,7 @@ export const register = async (req, res) => {
         }
 
         // bcrypt has a 72-byte UTF-8 limit, so passwords longer than that should be rejected both during registration and login.
-        const passwordBytes = Buffer.byteLength(password, "utf8");
+        const passwordBytes = Buffer.byteLength(normalizedPassword, "utf8");
 
         if (passwordBytes > 72) {
             return res.status(400).json({
@@ -73,7 +77,7 @@ export const register = async (req, res) => {
             });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPassword = await bcrypt.hash(normalizedPassword, 10);
 
         const user = await createUser(
             name,
@@ -120,7 +124,9 @@ export const login = async (req, res) => {
             });
         }
 
-        const validationError = validateCredentials(email, password);
+        const normalizedEmail = email.trim();
+        const normalizedPassword = password.trim();
+        const validationError = validateCredentials(normalizedEmail, normalizedPassword);
 
         if (validationError) {
             return res.status(400).json({
@@ -129,10 +135,10 @@ export const login = async (req, res) => {
             });
         }
 
-        const normalizedEmail = email.trim().toLowerCase();
+        const lowerCaseEmail = normalizedEmail.toLowerCase();
 
         // bcrypt has a 72-byte UTF-8 limit, so passwords longer than that should be rejected both during registration and login.
-        const passwordBytes = Buffer.byteLength(password.trim(), "utf8");
+        const passwordBytes = Buffer.byteLength(normalizedPassword, "utf8");
 
         if (passwordBytes > 72) {
             return res.status(400).json({
@@ -142,7 +148,7 @@ export const login = async (req, res) => {
         }
 
         // Find user
-        const user = await findUserByEmail(normalizedEmail);
+        const user = await findUserByEmail(lowerCaseEmail);
 
         if (!user) {
             return res.status(401).json({
@@ -153,7 +159,7 @@ export const login = async (req, res) => {
 
         // Compare entered password with hashed password
         const isPasswordValid = await bcrypt.compare(
-            password.trim(),
+            normalizedPassword,
             user.password
         );
 
